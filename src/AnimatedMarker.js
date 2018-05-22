@@ -27,7 +27,7 @@ L.AnimatedMarker = L.Marker.extend({
       var cur = latlngs[i-1],
           next = latlngs[i],
           dist = cur.distanceTo(next),
-          factor = this.options.distance / dist,
+          factor = 20 // this.options.distance / dist,
           dLat = factor * (next.lat - cur.lat),
           dLng = factor * (next.lng - cur.lng);
 
