@@ -27,7 +27,7 @@ L.AnimatedMarker = L.Marker.extend({
       var cur = latlngs[i-1],
           next = latlngs[i],
           dist = cur.distanceTo(next),
-          factor = 20 // this.options.distance / dist,
+          factor = this.options.distance / dist,
           dLat = factor * (next.lat - cur.lat),
           dLng = factor * (next.lng - cur.lng);
 
@@ -56,30 +56,12 @@ L.AnimatedMarker = L.Marker.extend({
   },
 
   animate: function() {
-    this.animateLine();
-
-    // Queue up the animation to the next next vertex
-    this._tid = setTimeout(function(){
-      if (self._i === len) {
-        self.options.onEnd.apply(self, Array.prototype.slice.call(arguments));
-      } else {
-        self.animate();
-      }
-    }, speed);
-  },
-
-  // Start the animation
-  start: function() {
-    this.animate();
-  },
-
-  animateLine: function() {
     var self = this,
         len = this._latlngs.length,
         speed = this.options.interval;
 
     // Normalize the transition speed from vertex to vertex
-    if (this._i < len && this._i > 0) {
+    if (this._i < len && this.i > 0) {
       speed = this._latlngs[this._i-1].distanceTo(this._latlngs[this._i]) / this.options.distance * this.options.interval;
     }
 
@@ -92,11 +74,46 @@ L.AnimatedMarker = L.Marker.extend({
     // Move to the next vertex
     this.setLatLng(this._latlngs[this._i]);
     this._i++;
+
+    // Queue up the animation to the next next vertex
+    this._tid = setTimeout(function(){
+      if (self._i === len) {
+        self.options.onEnd.apply(self, Array.prototype.slice.call(arguments));
+      } else {
+        self.animate();
+      }
+    }, speed);
   },
 
-  startAnimateLine: function(index) {
-    this._i = index;
-    this.animateLine();
+  animateLine: function(index) {
+    var self = this,
+        len = this._latlngs.length,
+        speed = this.options.interval;
+
+    // Normalize the transition speed from vertex to vertex
+    if (this._i < len && this.i > 0) {
+      speed = this._latlngs[this._i-1].distanceTo(this._latlngs[this._i]) / this.options.distance * this.options.interval;
+    }
+
+    // Only if CSS3 transitions are supported
+    if (L.DomUtil.TRANSITION) {
+      if (this._icon) { this._icon.style[L.DomUtil.TRANSITION] = ('all ' + speed + 'ms linear'); }
+      if (this._shadow) { this._shadow.style[L.DomUtil.TRANSITION] = 'all ' + speed + 'ms linear'; }
+    }
+
+    // Move to the next vertex
+    this.setLatLng(this._latlngs[index]);
+    this._i = index + 1;
+  },
+
+  // Start the animation
+  start: function() {
+    this.animate();
+  },
+
+  // Start the animation
+  startLine: function(index) {
+    this.animateLine(index);
   },
 
   // Stop the animation in place
